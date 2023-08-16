@@ -84,6 +84,9 @@ func (s *ReadSettings) dup() ReadSettings {
 
 // WriteSettings determine the behavior of the Document's WriteTo* methods.
 type WriteSettings struct {
+	// NoEscape disable escaping all attribute and text
+	NoEscape bool
+
 	// CanonicalEndTags forces the production of XML end tags, even for
 	// elements that have no child elements. Default: false.
 	CanonicalEndTags bool
@@ -114,6 +117,7 @@ type WriteSettings struct {
 // newWriteSettings creates a default WriteSettings record.
 func newWriteSettings() WriteSettings {
 	return WriteSettings{
+		NoEscape:         false,
 		CanonicalEndTags: false,
 		CanonicalText:    false,
 		CanonicalAttrVal: false,
@@ -1341,7 +1345,11 @@ func (a *Attr) WriteTo(w Writer, s *WriteSettings) {
 	} else {
 		m = escapeNormal
 	}
-	escapeString(w, a.Value, m)
+	if !s.NoEscape {
+		escapeString(w, a.Value, m)
+	} else {
+		w.WriteString(a.Value)
+	}
 	if s.AttrSingleQuote {
 		w.WriteByte('\'')
 	} else {
@@ -1456,7 +1464,11 @@ func (c *CharData) WriteTo(w Writer, s *WriteSettings) {
 		} else {
 			m = escapeNormal
 		}
-		escapeString(w, c.Data, m)
+		if !s.NoEscape {
+			escapeString(w, c.Data, m)
+		} else {
+			w.WriteString(c.Data)
+		}
 	}
 }
 
